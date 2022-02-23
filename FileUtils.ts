@@ -143,7 +143,7 @@ export async function getFile(filePath: string): Promise<CodeFile> {
   } catch (err) {
     if ((err.message = "Failed to fetch")) {
       logseq.App.showMsg(
-        `Ensure that Live Server is active in your Visual Studio Code`, 'error'
+        `The file was not found. Github is case sensitive so check the case of the path you provided.`, 'error'
       );
       return {
         content: err.message,
