@@ -51,7 +51,11 @@ const refreshCode = async (blockId: string, filePath?: string) => {
   const block = await logseq.Editor.getBlock(blockId, {
     includeChildren: true,
   });
-  if (block === null || block.children === undefined ||  block.children?.length === 0) {
+  if (
+    block === null ||
+    block.children === undefined ||
+    block.children?.length === 0
+  ) {
     return;
   }
   const existingBlock = await logseq.Editor.getBlock(
@@ -78,7 +82,11 @@ const getCode = async (blockId: string, filePath?: string) => {
   const block = await logseq.Editor.getBlock(blockId, {
     includeChildren: true,
   });
-  if (block === null || block.children === undefined ||  block.children?.length !== 0) {
+  if (
+    block === null ||
+    block.children === undefined ||
+    block.children?.length !== 0
+  ) {
     return;
   }
 
@@ -93,13 +101,13 @@ const getCode = async (blockId: string, filePath?: string) => {
   const contents = await getFile(_filePath);
 
   if (contents.type == CodeType.error) {
-    logseq.App.showMsg(`VS Code Error: ${_filePath}`,'error');
+    logseq.App.showMsg(`VS Code Error: ${_filePath}`, "error");
     return;
   }
 
   // Escape any '```' in the body of the text as this breaks codemirror
-  if(contents.content.includes('```')) {
-    contents.content =  contents.content.split('```').join('\\`\\`\\`');
+  if (contents.content.includes("```")) {
+    contents.content = contents.content.split("```").join("\\`\\`\\`");
   }
 
   // Insert the code block
@@ -112,12 +120,16 @@ const getCode = async (blockId: string, filePath?: string) => {
     }
   );
 
-  insertRefreshBtn(blockId,contents.commit_id);
+  insertRefreshBtn(blockId, contents.commit_id);
   // Exit editor
   logseq.Editor.exitEditingMode();
 };
 
-const insertRefreshBtn = async (blockId: string, commit_id?: string, pin = true) => {
+const insertRefreshBtn = async (
+  blockId: string,
+  commit_id?: string,
+  pin = true
+) => {
   const block = await logseq.Editor.getBlock(blockId, {
     includeChildren: true,
   });
@@ -125,7 +137,9 @@ const insertRefreshBtn = async (blockId: string, commit_id?: string, pin = true)
   if (!block!.content.includes("renderer :github"))
     logseq.Editor.updateBlock(
       blockId,
-      `{{renderer :github_${genRandomStr()}, ${block!.content}${commit_id ? ', ' + commit_id : ''}${pin ? ', true' : ', false'}}}`
+      `{{renderer :github_${genRandomStr()}, ${block!.content}${
+        commit_id ? ", " + commit_id : ""
+      }${pin ? ", true" : ", false"}}}`
     );
 };
 
@@ -136,20 +150,30 @@ logseq
 
     logseq.Editor.registerSlashCommand("Github Code Embed", async (e) => {
       if (!checkSettings()) return;
-    
+
       getCode(e.uuid);
     });
-    logseq.Editor.registerBlockContextMenuItem("Github Code Embed", async (e) => {
-      if (!checkSettings()) return;
-      insertRefreshBtn(e.uuid);
-      getCode(e.uuid);
-    });
+    logseq.Editor.registerBlockContextMenuItem(
+      "Github Code Embed",
+      async (e) => {
+        if (!checkSettings()) return;
+        insertRefreshBtn(e.uuid);
+        getCode(e.uuid);
+      }
+    );
+
+    logseq.setMainUIInlineStyle({
+      position: 'fixed',
+      width: '290px',
+      zIndex: 999,
+      transform: 'translateX(-50%)',
+    })
 
     logseq.App.onMacroRendererSlotted(({ slot, payload }) => {
       let [type, filePath, commit_id, pin] = payload.arguments;
       // check filePath includes repo
-      if(!filePath.includes(':') && logseq.settings) {
-        filePath = logseq.settings.githubRepo + ':' + filePath;
+      if (!filePath.includes(":") && logseq.settings) {
+        filePath = logseq.settings.githubRepo + ":" + filePath;
       }
 
       if (!type?.startsWith(":github_")) return;
@@ -166,18 +190,25 @@ logseq
             includeChildren: false,
           });
           // Toggle Pin setting
-          let updatedContent = '';
-          if(block?.content.includes('false')) 
-            { updatedContent = block?.content.replace('false', 'true')}
-          if(block?.content.includes('true')) 
-            { updatedContent = block?.content.replace('true', 'false')}
+          let updatedContent = "";
+          if (block?.content.includes("false")) {
+            updatedContent = block?.content.replace("false", "true");
+            const { rect } = e;
+
+            // logseq.setMainUIInlineStyle({
+            //   top: `${rect.top + 20}px`,
+            //   left: `${rect.right - 10}px`,
+            // });
+
+            logseq.toggleMainUI();
+          }
+          if (block?.content.includes("true")) {
+            updatedContent = block?.content.replace("true", "false");
+          }
 
           // Update recyle button
-            logseq.Editor.updateBlock(
-              e.dataset.blockUuid,
-              updatedContent
-            );
-        }
+          logseq.Editor.updateBlock(e.dataset.blockUuid, updatedContent);
+        },
       });
 
       logseq.provideStyle(`
@@ -235,8 +266,8 @@ logseq
             <button class="github-commit-id"
               data-block-uuid="${payload.uuid}"
               data-on-click="togglePin">
-            ${commit_id.substr(0,7)}${pin == 'true' ? '📌' : ''}
-            </button>  
+            ${commit_id.substr(0, 7)}${pin == "true" ? "📌" : ""}
+            </button>
           `,
       });
     });
